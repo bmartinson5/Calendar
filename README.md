@@ -7,18 +7,17 @@
     1. go to canlender_app/server
     
     2. install all the library with
-    
-    ```
+    <pre><code>
     pip install 'LIBRARY'  
-    ```
+    <code/></pre>
     
     in the terminal  (I will make a auto install later)
     
     3. run 
     
-    ```
+    <pre><code>
     python canlendarApp.py
-    ```
+    <code/></pre>
     
     in terminal
 
