@@ -6,9 +6,9 @@
 
     1. go to canlender_app/server
     
-    2. install all the library with pip install 'LIBRARY' in the terminal  (I will make a auto install later)
+    2. install all the library with "pip install 'LIBRARY'" in the terminal  (I will make a auto install later)
     
-    3. run python canlendarApp.py in terminal
+    3. run "python canlendarApp.py" in terminal
 
 ### 2. run front-end(react):
 
