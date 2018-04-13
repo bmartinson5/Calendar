@@ -53,13 +53,22 @@ class calendarFile(Resource):
 
     #Get request will return all the events from the file
     def get(self):
-        result = [{
+        result = [
+        {
             "id": 0,
             "title": 'All Day Event very long title',
             "allDay": True,
-            "start": [2015, 3, 0],
-            "end": [2015, 3, 1]
-        }]
+            "start": '2015-03-31T07:00:00.000Z',
+            "end": '2015-04-01T07:00:00.000Z'
+        },
+        {
+            "id": 6,
+            "title": 'Meeting',
+            "start": '2015-04-12T17:30:00.000Z',
+            "end": '2015-04-12T19:30:00.000Z',
+            "desc": 'Pre-meeting meeting, to prepare for the meeting'
+        }
+        ]
         #result = retrieveEventsFromFile()
         return flask.jsonify(result = result)
 
