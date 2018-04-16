@@ -7,7 +7,7 @@ export default [
         end: new Date(2015, 3, 1),
     },
     {
-        id: 1,
+        id: "asdfhwhfuwe34243j2j3hj2h",
         title: 'Long Event',
         start: new Date(2015, 3, 7),
         end: new Date(2015, 3, 10),
@@ -74,7 +74,7 @@ export default [
         end: new Date(2015, 3, 12, 21, 0, 0,0),
     },
     {
-        id: 11,
+        id: 'rhfirehekhrfo774jk23fjbn',
         title: 'Birthday Party',
         start: new Date(2015, 3, 13, 7, 0, 0),
         end: new Date(2015, 3, 13, 10, 30, 0),

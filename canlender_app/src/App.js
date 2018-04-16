@@ -21,6 +21,10 @@ class App extends Component {
         this.state = {
             events:[]
         };
+
+        this.boom = this.boom.bind(this);
+
+
     }
 
     componentDidMount() {
@@ -62,10 +66,44 @@ class App extends Component {
 
     lol(){
 
-        Popup.plugins().prompt('', 'Type event info', function (value) {
-            Popup.alert('You typed: ' + value);
+        Popup.plugins().prompt('', 'Type event info', function (value, n) {
+            Popup.alert('You typed: ' + value + " " + n);
         });
         console.log("lol")
+    }
+
+    boom(event){
+        console.log(event)
+        this.setState({
+            events: this.state.events.concat(event)
+        })
+
+
+        //post request
+
+    }
+
+    add(slotInfo){
+
+
+        Popup.plugins().new('', this.boom, slotInfo.start.toLocaleString(), slotInfo.end.toLocaleString(),function (start, end, title, description, boom) {
+            Popup.alert('You typed: ' + start + " " + end + " " + title + " " + description);
+
+
+
+            var event = {
+                title: title,
+                start: new Date(start),
+                end: new Date(end),
+                desc: description
+            }
+
+            boom(event)
+
+        });
+
+
+
     }
 
 
@@ -102,10 +140,14 @@ class App extends Component {
               onSelectEvent={event => this.lol()
                   //alert(event.title)
               }
-              onSelectSlot={event => this.lol()
+              onSelectSlot={
 
 
-                  // slotInfo =>
+                  slotInfo => this.add(slotInfo)
+
+
+
+
                   // alert(
                   //     `selected slot: \n\nstart ${slotInfo.start.toLocaleString()} ` +
                   //     `\nend: ${slotInfo.end.toLocaleString()}` +
