@@ -68,13 +68,13 @@ export default [
         desc: 'Most important meal of the day',
     },
     {
-        id: 10,
+        id: 'ssssssssss',
         title: 'Dinner',
         start: new Date(2015, 3, 12, 20, 0, 0, 0),
         end: new Date(2015, 3, 12, 21, 0, 0,0),
     },
     {
-        id: 'rhfirehekhrfo774jk23fjbn',
+        id: 11,
         title: 'Birthday Party',
         start: new Date(2015, 3, 13, 7, 0, 0),
         end: new Date(2015, 3, 13, 10, 30, 0),
@@ -92,9 +92,10 @@ export default [
         end: new Date(2015, 3, 22, 2, 0, 0),
     },
     {
-        id: 14,
+        id: 'hdbiuwheudwuedui',
         title: 'Today',
         start: new Date(new Date().setHours(new Date().getHours() - 3)),
         end: new Date(new Date().setHours(new Date().getHours() + 3)),
+        desc: "ssssss",
     },
 ]

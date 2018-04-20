@@ -12,7 +12,7 @@ class Datetime_Prompt extends React.Component {
         super(props);
 
         this.state = {
-            value: this.props.datetime,
+            value: this.props.value,
             type: 'text'
         };
 
@@ -40,7 +40,7 @@ class Datetime_Prompt extends React.Component {
     render() {
         return (
             <div>
-            <input type={this.state.type} placeholder={this.props.placeholder} className="mm-popup__input"  value={this.state.value} onChange={this.onChange}  onFocus={this.onFocus} />
+            <input type={this.state.type} placeholder={this.props.placeholder} max="4000-12-31" className="mm-popup__input"  value={this.state.value} onChange={this.onChange}  onFocus={this.onFocus} />
 
             </div>
     )
@@ -53,7 +53,7 @@ class Text_Prompt extends React.Component {
         super(props);
 
         this.state = {
-            value: this.props.datetime
+            value: this.props.value
         };
 
         this.onChange = (e) => this._onChange(e);
@@ -78,7 +78,7 @@ class Text_Prompt extends React.Component {
     render() {
         return (
             <div>
-                <input type="text" placeholder={this.props.placeholder} className="mm-popup__input"  value={this.state.value} onChange={this.onChange}  />
+                <input type="text" className="mm-popup__input"  value={this.state.value} onChange={this.onChange}  />
 
             </div>
         )
@@ -139,15 +139,39 @@ Popup.registerPlugin('new', function (defaultValue, boom, startdate, enddate, ca
 });
 
 /** Prompt plugin */
-Popup.registerPlugin('prompt', function (defaultValue, placeholder2, callback) {
-    let promptValue = null;
-    let promptChange = function (value) {
-        promptValue = value;
+Popup.registerPlugin('modify', function (defaultValue, edit_action, delete_action, startdate, enddate, title, description, callback) {
+    let start_promptValue = startdate;
+    let start_promptChange = function (value) {
+        start_promptValue = value;
+    };
+
+    let end_promptValue = enddate;
+    let end_promptChange = function (value) {
+        end_promptValue = value;
+    };
+
+    let title_promptValue = title;
+    let title_promptChange = function (value) {
+        title_promptValue = value;
+    };
+
+    let description_promptValue = description;
+    let description_promptChange = function (value) {
+        description_promptValue = value;
     };
 
     this.create({
-        title: 'Your Event',
-        content: <Datetime_Prompt onChange={promptChange} placeholder1={placeholder2} value={defaultValue} />,
+        title: 'Modify Your Event',
+        content: <div>
+            <p>Start Time</p>
+            <Datetime_Prompt onChange={start_promptChange} placeholder={startdate}  value={startdate} />
+            <p>End Time</p>
+            <Datetime_Prompt onChange={end_promptChange} placeholder={enddate}  value={enddate} />
+            <p>Title</p>
+            <Text_Prompt onChange={title_promptChange} placeholder={title}  value={title} />
+            <p>Description</p>
+            <Text_Prompt onChange={description_promptChange}  placeholder={description} value={description} />
+        </div>,
         buttons: {
             left: ['cancel'],
             right: [{
@@ -155,13 +179,17 @@ Popup.registerPlugin('prompt', function (defaultValue, placeholder2, callback) {
                 key: '⌘+s',
                 className: 'success',
                 action: function () {
-                    callback(promptValue, 0);
+                    callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, edit_action);
                     Popup.close();
                 }
             },
                 {
                     text: 'delete',
-                    key: '⌘+s'
+                    key: '⌘+s',
+                    action: function () {
+                        callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, delete_action);
+                        Popup.close();
+                    }
             }
 
             ]
@@ -169,3 +197,4 @@ Popup.registerPlugin('prompt', function (defaultValue, placeholder2, callback) {
     });
 });
 
+export default Text_Prompt;

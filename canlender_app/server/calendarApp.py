@@ -55,17 +55,17 @@ class calendarFile(Resource):
     def get(self):
         result = [
         {
-            "id": 0,
+            "id": '0',
             "title": 'All Day Event very long title',
             "allDay": True,
-            "start": '2015-03-31T07:00:00.000Z',
-            "end": '2015-04-01T07:00:00.000Z'
+            "start": '2018-03-31T07:00:00.000Z',
+            "end": '2018-04-01T07:00:00.000Z'
         },
         {
-            "id": 6,
+            "id": '6',
             "title": 'Meeting',
-            "start": '2015-04-12T17:30:00.000Z',
-            "end": '2015-04-12T19:30:00.000Z',
+            "start": '2018-04-12T17:30:00.000Z',
+            "end": '2018-04-12T19:30:00.000Z',
             "desc": 'Pre-meeting meeting, to prepare for the meeting'
         }
         ]
