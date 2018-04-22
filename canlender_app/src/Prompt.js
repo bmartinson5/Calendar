@@ -85,7 +85,7 @@ class Text_Prompt extends React.Component {
     }
 }
 
-Popup.registerPlugin('new', function (defaultValue, boom, startdate, enddate, callback) {
+Popup.registerPlugin('new', function (defaultValue, add_action, startdate, enddate, callback) {
     let start_promptValue = startdate;
     let start_promptChange = function (value) {
         start_promptValue = value;
@@ -128,7 +128,7 @@ Popup.registerPlugin('new', function (defaultValue, boom, startdate, enddate, ca
                 key: '⌘+s',
                 className: 'success',
                 action: function () {
-                    callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, boom);
+                    callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, add_action);
                     Popup.close();
                 }
             }

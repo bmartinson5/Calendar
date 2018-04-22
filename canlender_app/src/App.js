@@ -27,78 +27,75 @@ class App extends Component {
         };
 
 
-        this.boom = this.boom.bind(this);
+        this.add_action = this.add_action.bind(this);
         this.edit = this.edit.bind(this);
-        this.delete = this.delete.bind(this);
+        this.delete_action = this.delete_action.bind(this);
         this.load_events = this.load_events.bind(this);
-        this.sayHi = this.sayHi.bind(this);
-        this.create_new = this.create_new.bind(this);
+        this.getExistCalendar = this.getExistCalendar.bind(this);
+        this.create_new_calendar = this.create_new_calendar.bind(this);
 
     }
 
     componentDidMount() {
 
-        //var event_list = []
-
-        //this.load_events()
-
-        // axios.get('http://localhost:5002/useApi')
-        //     .then(res => {
-        //
-        //         // //console.log(res.data.result)
-        //         //
-        //         // var d = new Date(2015, 3, 12, 12, 30, 0, 0)
-        //         //
-        //         // //var d2 = new Date('2019-09-17T21:28:00.000Z')
-        //         // console.log(d.toJSON())
-        //
-        //         for ( var i = 0; i < res.data.result.length; i++){
-        //
-        //             res.data.result[i]['start'] = new Date(res.data.result[i]['start'])
-        //             res.data.result[i]['end'] = new Date(res.data.result[i]['end'])
-        //             event_list.push(res.data.result[i])
-        //
-        //         }
-        //
-        //         this.setState({
-        //             events: event_list
-        //         });
-        //
-        //     })
-
     }
 
-    load_events(){
+    load_events(uuId){
 
         var event_list = []
 
-
         //get request
-
-        axios.get('http://localhost:5002/useApi')
+        axios.get('http://localhost:5002/useApi', {
+            params: {
+                calID: uuId
+            }
+        })
             .then(res => {
 
-
-                for ( var i = 0; i < res.data.result.length; i++){
-
-                    res.data.result[i]['start'] = new Date(res.data.result[i]['start'])
-                    res.data.result[i]['end'] = new Date(res.data.result[i]['end'])
-
-                    event_list.push(res.data.result[i])
-
+                if(res.data.result === 'None'){
+                    console.log("None")
+                    Popup.alert('The uuid you typed in is not exist, please try again');
                 }
-
-                console.log(event_list)
-
-
-                this.setState({
-                    events: event_list
-                });
-
+                else{
+                    for ( var i = 0; i < res.data.result.length; i++){
+                        res.data.result[i]['start'] = new Date(res.data.result[i]['start'])
+                        res.data.result[i]['end'] = new Date(res.data.result[i]['end'])
+                        event_list.push(res.data.result[i])
+                    }
+                    console.log(event_list)
+                    this.setState({
+                        events: event_list,
+                        loggedIn: true,
+                        calenderID: uuId
+                    });
+                }
             })
-
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    modify(slotInfo){
+
+        // Popup.plugins().prompt('', 'Type event info', function (value, n) {
+        //     Popup.alert('You typed: ' + value + " " + n);
+        // });
+        // console.log("lol")
+
+        Popup.plugins().modify('', this.edit, this.delete_action, slotInfo.start.toLocaleString(), slotInfo.end.toLocaleString(), slotInfo.title, slotInfo.desc ,function (start, end, title, description, action) {
+            //Popup.alert('You typed: ' + slotInfo.id);
+
+            var event = {
+
+                id:slotInfo.id,
+                title: title,
+                start: new Date(start),
+                end: new Date(end),
+                desc: description
+            }
+            action(event)
+        });
+
+    }
 
     edit(event){
 
@@ -106,28 +103,26 @@ class App extends Component {
 
         var identify_id = event['id']
 
-
-
-
         console.log("edit!!!!!")
         // //console.log(this.state.events)
-        //
         var event_list = this.state.events.slice() //copy the array
         var i = 0
         for (i = 0; i< event_list.length; i++){
             if (event_list[i]['id'] === identify_id){
                 event_list[i] = event
             }
-
-
         }
         this.setState({events: event_list}) //set the new state
 
-        //push request
+        //put request
 
+        axios.put('http://localhost:5002/useApi', {
+            calID: this.state.calenderID,
+            event: event
+        })
     }
 
-    delete(event){
+    delete_action(event){
 
         var identify_id = event['id']
 
@@ -139,66 +134,27 @@ class App extends Component {
             if (event_list[i]['id'] === identify_id){
                 event_list.splice(i, 1);
             }
-
-
         }
         this.setState({events: event_list}) //set the new state
 
         //delete request
 
-
-    }
-
-    modify(slotInfo){
-
-        // Popup.plugins().prompt('', 'Type event info', function (value, n) {
-        //     Popup.alert('You typed: ' + value + " " + n);
-        // });
-        // console.log("lol")
-
-        Popup.plugins().modify('', this.edit, this.delete, slotInfo.start.toLocaleString(), slotInfo.end.toLocaleString(), slotInfo.title, slotInfo.desc ,function (start, end, title, description, action) {
-            //Popup.alert('You typed: ' + slotInfo.id);
-
-
-
-            var event = {
-
-                id:slotInfo.id,
-                title: title,
-                start: new Date(start),
-                end: new Date(end),
-                desc: description
-            }
-
-            action(event)
-
-        });
-
-    }
-
-    boom(event){
-        console.log(event)
-        this.setState({
-            events: this.state.events.concat(event)
+        axios.delete('http://localhost:5002/useApi', { data: {
+            calID: this.state.calenderID,
+            eventId: identify_id
+        }
         })
-
-
-        //post request
-
-        axios.post('http://localhost:5002/useApi', {
-
-            event: event
-        })
-
-
     }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     add(slotInfo){
 
         const uuidv4 = require('uuid/v4');
         var id = uuidv4()
 
-        Popup.plugins().new('', this.boom, slotInfo.start.toLocaleString(), slotInfo.end.toLocaleString(),function (start, end, title, description, boom) {
+        Popup.plugins().new('', this.add_action, slotInfo.start.toLocaleString(), slotInfo.end.toLocaleString(),function (start, end, title, description, add_action) {
             //Popup.alert('You typed: ' + start + " " + end + " " + title + " " + description);
 
             var event = {
@@ -208,116 +164,151 @@ class App extends Component {
                 end: new Date(end),
                 desc: description
             }
-
-            boom(event)
-
+            add_action(event)
         });
-
-
-
     }
 
-    sayHi(){
+    add_action(event){
 
-        console.log("Hi Hi Hi!!!")
+        console.log(event)
+        this.setState({
+            events: this.state.events.concat(event)
+        })
+
+        //post request
+        axios.post('http://localhost:5002/useApi', {
+            calID: this.state.calenderID,
+            event: event
+        })
     }
 
-    create_new(){
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    create_new_calendar(){
 
         const uuidv4 = require('uuid/v4');
-        var canlender_uuid = uuidv4()
+        var calendar_uuid = uuidv4()
 
         this.setState(
                 {
                     loggedIn: true,
-                    calenderID: canlender_uuid
+                    calenderID: calendar_uuid
                 }
-            )
-        //this.load_events()
+        )
+        this.create_user(calendar_uuid)
+    }
+
+    getExistCalendar(uuid_promptValue){
+
+        console.log("Hi Hi Hi!!!")
+        console.log(uuid_promptValue)
+        this.load_events(uuid_promptValue)
+    }
+
+    create_user(uuid){
+
+        axios.post('http://localhost:5002/createUser', {
+            calID: uuid,
+        })
+        console.log('user created')
     }
 
 
-
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
   render() {
 
       //conditional rendering
+      console.log('in render() ' + this.state.calenderID)
 
       var calender = ""
 
       if (this.state.loggedIn){
-          calender = <BigCalendar
-              selectable
-              events={this.state.events}
-              defaultView="week"
-              scrollToTime={new Date(1970, 1, 1, 6)}
-              defaultDate={ new Date(2018,4,1)}
-              onSelectEvent={event => this.modify(event)
-                  //alert(event.title)
-              }
-              onSelectSlot={
-                  slotInfo => this.add(slotInfo)
-              }
-          />
+          calender =<div style={{height: 700}}>
 
+              <BigCalendar
+                  eventPropGetter={
+                      (event, start, end, isSelected) => {
+                          let newStyle = {
+                              backgroundColor: "#4CAF50",
+                              color: 'white',
+                              borderRadius: "0px",
+                              border: "3px solid rgba(63,145,12,0.36)"
+                          };
+                          return {
+                              className: "",
+                              style: newStyle
+                          };
+                      }
+                  }
+                  selectable
+                  events={this.state.events}
+                  defaultView="week"
+                  scrollToTime={new Date(1970, 1, 1, 6)}
+                  defaultDate={ new Date(2018,4,1)}
+                  onSelectEvent={event => this.modify(event)
+                      //alert(event.title)
+                  }
+                  onSelectSlot={
+                      slotInfo => this.add(slotInfo)
+                  }
+              />
+
+
+          </div>
       }
       else{
-          let uuid_promptValue = " ";
-          let uuid_promptChange = function (value) {
-              uuid_promptValue = value;
-              console.log(uuid_promptValue)
-          };
+              let uuid_promptValue = " ";
+              let uuid_promptChange = function (value) {
+                  uuid_promptValue = value;
+                  console.log(uuid_promptValue)
+              };
 
 
-          calender = <div className='rowC'>
-                  <div className='center'>
-                      <p>Enter your uuid to get to your calender</p>
-                      <Text_Prompt onChange={uuid_promptChange} placeholder={"sssss"}  value={""} />
-                      <button onClick={this.sayHi}>
-                          Get Canlender
-                      </button>
+              calender =
+                  <div className='rowC'>
+                          <div className='center'>
+                              <p className='demoFont' >Enter your uuid</p>
+                              <Text_Prompt  onChange={uuid_promptChange} placeholder={"sssss"}  value={""} />
+                              <button className='getCalenderButton' onClick={() => this.getExistCalendar(uuid_promptValue)}>
+                                  Get Canlender
+                              </button>
+                          </div>
+
+                          <div className='center'>
+                              <p className='demoFont'>Create a new calender</p>
+                              <button className='createNewCalenderButton' onClick={this.create_new_calendar}>
+                                  Create New
+                              </button>
+                          </div>
                   </div>
-
-                  <div className='center'>
-                      <p>Create a new calender</p>
-                      <button onClick={this.create_new}>
-                          Create New
-                      </button>
-                  </div>
-              </div>
       }
 
 
 
 
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to Canlender App!</h1>
-        </header>
-        <p className="App-intro">
-          ------------------------------------------------------
-        </p>
+          <div className="App">
+                <header className="App-header">
+                    <img src={logo} className="App-logo" alt="logo" />
+                    <h1 className="App-title">Welcome to Duck Calendar!</h1>
+                </header>
+                <p className="App-intro">
+                  ------------------------------------------------------
+                </p>
 
+                <div style={{height: 700}}>
 
-         <div style={{height: 700}}>
+                    <div  style={{ height: 50 }}>
+                        <p>//Your calender ID is ({this.state.calenderID})</p>
+                    </div>
+                    <Popup />
+                    {calender}
+                </div>
 
-              <div  style={{ height: 50 }}>
-                  <p>Your calender ID is ({this.state.calenderID})</p>
-              </div>
-
-             <Popup />
-
-
-             {calender}
-
-
-         </div>
-
-      </div>
+          </div>
 
     );
   }
