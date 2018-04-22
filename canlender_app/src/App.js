@@ -10,7 +10,7 @@ import Popup from 'react-popup';
 import Text_Prompt from './Prompt.js'
 
 
-BigCalendar.momentLocalizer(moment); // or globalizeLocalizer
+BigCalendar.momentLocalizer(moment); // or globalizeLocalizer.
 
 
 class App extends Component {
