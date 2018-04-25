@@ -7,7 +7,9 @@ import events from './events'
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import axios from 'axios';
 import Popup from 'react-popup';
-import Text_Prompt from './Prompt.js'
+import {Text_Prompt, Radio_Button} from './Prompt.js'
+import Bar from './Bar.js'
+import {CSVLink, CSVDownload} from 'react-csv';
 
 
 BigCalendar.momentLocalizer(moment); // or globalizeLocalizer.
@@ -22,8 +24,8 @@ class App extends Component {
         this.state = {
             events:[],
             loggedIn: false,
-            calenderID:''
-
+            calenderID:'',
+            eventsList: []
         };
 
 
@@ -66,7 +68,8 @@ class App extends Component {
                     this.setState({
                         events: event_list,
                         loggedIn: true,
-                        calenderID: uuId
+                        calenderID: uuId,
+                        eventsList: event_list
                     });
                 }
             })
@@ -81,7 +84,7 @@ class App extends Component {
         // });
         // console.log("lol")
 
-        Popup.plugins().modify('', this.edit, this.delete_action, slotInfo.start.toLocaleString(), slotInfo.end.toLocaleString(), slotInfo.title, slotInfo.desc ,function (start, end, title, description, action) {
+        Popup.plugins().modify('', this.edit, this.delete_action, slotInfo.start.toLocaleString(), slotInfo.end.toLocaleString(), slotInfo.title, slotInfo.desc ,slotInfo.prior, function (start, end, title, description, priority, action) {
             //Popup.alert('You typed: ' + slotInfo.id);
 
             var event = {
@@ -90,7 +93,8 @@ class App extends Component {
                 title: title,
                 start: new Date(start),
                 end: new Date(end),
-                desc: description
+                desc: description,
+                prior: priority
             }
             action(event)
         });
@@ -106,13 +110,17 @@ class App extends Component {
         console.log("edit!!!!!")
         // //console.log(this.state.events)
         var event_list = this.state.events.slice() //copy the array
+        var full_list = this.state.eventsList.slice() //copy the array
         var i = 0
         for (i = 0; i< event_list.length; i++){
             if (event_list[i]['id'] === identify_id){
                 event_list[i] = event
             }
+            if (full_list[i]['id'] === identify_id){
+                full_list[i] = event
+            }
         }
-        this.setState({events: event_list}) //set the new state
+        this.setState({events: event_list, eventsList: full_list}) //set the new state
 
         //put request
 
@@ -127,6 +135,7 @@ class App extends Component {
         var identify_id = event['id']
 
         var event_list = this.state.events.slice() //copy the array
+        var full_list = this.state.eventsList.slice() //copy the array
 
         var i = 0
 
@@ -134,8 +143,11 @@ class App extends Component {
             if (event_list[i]['id'] === identify_id){
                 event_list.splice(i, 1);
             }
+            if (full_list[i]['id'] === identify_id){
+                full_list.splice(i, 1);
+            }
         }
-        this.setState({events: event_list}) //set the new state
+        this.setState({events: event_list, eventsList: full_list}) //set the new state
 
         //delete request
 
@@ -154,7 +166,7 @@ class App extends Component {
         const uuidv4 = require('uuid/v4');
         var id = uuidv4()
 
-        Popup.plugins().new('', this.add_action, slotInfo.start.toLocaleString(), slotInfo.end.toLocaleString(),function (start, end, title, description, add_action) {
+        Popup.plugins().new('', this.add_action, slotInfo.start.toLocaleString(), slotInfo.end.toLocaleString(),function (start, end, title, description, priority, add_action) {
             //Popup.alert('You typed: ' + start + " " + end + " " + title + " " + description);
 
             var event = {
@@ -162,7 +174,8 @@ class App extends Component {
                 title: title,
                 start: new Date(start),
                 end: new Date(end),
-                desc: description
+                desc: description,
+                prior: priority
             }
             add_action(event)
         });
@@ -172,7 +185,8 @@ class App extends Component {
 
         console.log(event)
         this.setState({
-            events: this.state.events.concat(event)
+            events: this.state.events.concat(event),
+            eventsList: this.state.eventsList.concat(event)
         })
 
         //post request
@@ -190,10 +204,10 @@ class App extends Component {
         var calendar_uuid = uuidv4()
 
         this.setState(
-                {
-                    loggedIn: true,
-                    calenderID: calendar_uuid
-                }
+            {
+                loggedIn: true,
+                calenderID: calendar_uuid
+            }
         )
         this.create_user(calendar_uuid)
     }
@@ -216,102 +230,235 @@ class App extends Component {
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    handlePriorityChange = (value) => {
+        console.log("got here")
+        if(value == "AllEvents"){
+            console.log(this.state.eventsList)
+            this.setState({events: this.state.eventsList})
+        }
 
+        else{
+            var tempList = []
+            var eventLength = this.state.eventsList.length
+            console.log("tempList = " + this.state.eventsList)
+            for(var i = 0; i < eventLength; i++){
+                console.log(this.state.eventsList[i]['prior'])
+                if(this.state.eventsList[i]['prior'] == value)
+                    tempList.push(this.state.eventsList[i])
+            }
 
-  render() {
+            this.setState({events: tempList})
+        }
+    }
 
-      //conditional rendering
-      console.log('in render() ' + this.state.calenderID)
+    logout = () => {
+        this.setState(
+            {
+                events:[],
+                loggedIn: false,
+                calenderID:'',
+                eventsList: []
+            }
+        )
 
-      var calender = ""
+    }
 
-      if (this.state.loggedIn){
-          calender =<div style={{height: 700}}>
+    bar_add = () =>{
+        console.log("bar add")
+        var today = new Date()
+        var default_start = today
+        var default_end = today
+        console.log(today.getYear() + " " +  today.getMonth() + " " + today.getDay())
 
-              <BigCalendar
-                  eventPropGetter={
-                      (event, start, end, isSelected) => {
-                          let newStyle = {
-                              backgroundColor: "#4CAF50",
-                              color: 'white',
-                              borderRadius: "0px",
-                              border: "3px solid rgba(63,145,12,0.36)"
-                          };
-                          return {
-                              className: "",
-                              style: newStyle
-                          };
-                      }
-                  }
-                  selectable
-                  events={this.state.events}
-                  defaultView="week"
-                  scrollToTime={new Date(1970, 1, 1, 6)}
-                  defaultDate={ new Date(2018,4,1)}
-                  onSelectEvent={event => this.modify(event)
-                      //alert(event.title)
-                  }
-                  onSelectSlot={
-                      slotInfo => this.add(slotInfo)
-                  }
-              />
+        const uuidv4 = require('uuid/v4');
+        var id = uuidv4()
 
+        Popup.plugins().new('', this.add_action, default_start.toLocaleString(), default_end.toLocaleString(),function (start, end, title, description, priority, add_action) {
+            //Popup.alert('You typed: ' + start + " " + end + " " + title + " " + description);
 
-          </div>
-      }
-      else{
-              let uuid_promptValue = " ";
-              let uuid_promptChange = function (value) {
-                  uuid_promptValue = value;
-                  console.log(uuid_promptValue)
-              };
-
-
-              calender =
-                  <div className='rowC'>
-                          <div className='center'>
-                              <p className='demoFont' >Enter your uuid</p>
-                              <Text_Prompt  onChange={uuid_promptChange} placeholder={"sssss"}  value={""} />
-                              <button className='getCalenderButton' onClick={() => this.getExistCalendar(uuid_promptValue)}>
-                                  Get Canlender
-                              </button>
-                          </div>
-
-                          <div className='center'>
-                              <p className='demoFont'>Create a new calender</p>
-                              <button className='createNewCalenderButton' onClick={this.create_new_calendar}>
-                                  Create New
-                              </button>
-                          </div>
-                  </div>
-      }
+            var event = {
+                id: id,
+                title: title,
+                start: new Date(start),
+                end: new Date(end),
+                desc: description,
+                prior: priority
+            }
+            add_action(event)
+        });
+    }
 
 
 
+    downloadCSV = () =>{
+        //
+        console.log("csv")
 
-    return (
-          <div className="App">
+        Popup.plugins().csv(this.state.events, function (events) {
+
+        });
+
+    }
+
+    merge_action = (id) =>{
+
+        var event_list = []
+
+        //get request
+        axios.get('http://localhost:5002/useApi', {
+            params: {
+                calID: id
+            }
+        })
+            .then(res => {
+
+                if(res.data.result === 'None'){
+                    console.log("None")
+                    Popup.alert('The uuid you typed in is not exist, please try again');
+                }
+                else{
+                    for ( var i = 0; i < res.data.result.length; i++){
+                        res.data.result[i]['start'] = new Date(res.data.result[i]['start'])
+                        res.data.result[i]['end'] = new Date(res.data.result[i]['end'])
+                        event_list.push(res.data.result[i])
+                    }
+                    console.log(event_list)
+                    this.setState({
+                        eventsList: this.state.events.concat(event_list),
+                        events: this.state.events.concat(event_list)
+                    });
+                    var i = 0
+                    for (i = 0; i < event_list.length; i++){
+                        axios.post('http://localhost:5002/useApi', {
+                            calID: this.state.calenderID,
+                            event: event_list[i]
+                        })
+
+                    }
+                }
+            })
+    }
+
+
+    merge = () =>{
+        console.log("merge")
+        this.handlePriorityChange("AllEvents")
+        Popup.plugins().merge('default', this.merge_action, '', function (id_promptValue, action) {
+
+            console.log(id_promptValue)
+            action(id_promptValue)
+
+        });
+
+
+
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    render() {
+
+        //conditional rendering
+        console.log('in render() ' + this.state.calenderID)
+
+        var filterByPriority = ""
+        var calender = ""
+        var bar = ""
+        var dateToday = new Date()
+        var p = <p>hhhhh</p>
+
+        if (this.state.loggedIn){
+            filterByPriority = <Radio_Button value="AllEvents" onChange={this.handlePriorityChange} retrieve="True"/>
+            bar = <Bar priority={this.handlePriorityChange}  logout={this.logout}  add={this.bar_add} csv ={this.downloadCSV}  merge={this.merge}/>
+            calender =<div style={{height: 700}}>
+
+                <BigCalendar
+                    eventPropGetter={
+                        (event, start, end, isSelected) => {
+                            let newStyle = {
+                                backgroundColor: "#4CAF50",
+                                color: 'white',
+                                borderRadius: "0px",
+                                border: "3px solid rgba(63,145,12,0.36)"
+                            };
+                            return {
+                                className: "",
+                                style: newStyle
+                            };
+                        }
+                    }
+                    selectable
+                    events={this.state.events}
+                    defaultView="week"
+                    scrollToTime={new Date(1970, 1, 1, 6)}
+                    defaultDate={ new Date(dateToday.getFullYear(),dateToday.getMonth(),dateToday.getDate())}
+                    onSelectEvent={event => this.modify(event)
+                        //alert(event.title)
+                    }
+                    onSelectSlot={
+                        slotInfo => this.add(slotInfo)
+                    }
+                />
+
+
+            </div>
+        }
+        else{
+            let uuid_promptValue = " ";
+            let uuid_promptChange = function (value) {
+                uuid_promptValue = value;
+                console.log(uuid_promptValue)
+            };
+
+
+            calender =
+                <div className='rowC'>
+                    <div className='center'>
+                        <p className='demoFont' >Enter your uuid</p>
+                        <Text_Prompt  onChange={uuid_promptChange} placeholder={"sssss"}  value={""} />
+                        <button className='getCalenderButton' onClick={() => this.getExistCalendar(uuid_promptValue)}>
+                            Get Canlender
+                        </button>
+                    </div>
+
+                    <div className='center'>
+                        <p className='demoFont'>Create a new calender</p>
+                        <button className='createNewCalenderButton' onClick={this.create_new_calendar}>
+                            Create New
+                        </button>
+                    </div>
+                </div>
+        }
+
+
+
+
+        return (
+            <div className="App">
                 <header className="App-header">
                     <img src={logo} className="App-logo" alt="logo" />
                     <h1 className="App-title">Welcome to Duck Calendar!</h1>
                 </header>
-                <p className="App-intro">
-                  ------------------------------------------------------
-                </p>
+
+                {bar}
 
                 <div style={{height: 700}}>
 
                     <div  style={{ height: 50 }}>
-                        <p>//Your calender ID is ({this.state.calenderID})</p>
+                        <p>Your calender ID is ({this.state.calenderID})</p>
                     </div>
                     <Popup />
+                    <div>
+
+                        {}
+                    </div>
                     {calender}
                 </div>
 
-          </div>
+            </div>
 
-    );
-  }
+        );
+    }
 }
 
 export default App;

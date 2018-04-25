@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import Popup from 'react-popup';
 import './style.css'
-
+import {CSVLink, CSVDownload} from 'react-csv';
+import './App.css';
 
 
 
@@ -40,10 +41,10 @@ class Datetime_Prompt extends React.Component {
     render() {
         return (
             <div>
-            <input type={this.state.type} placeholder={this.props.placeholder} max="4000-12-31" className="mm-popup__input"  value={this.state.value} onChange={this.onChange}  onFocus={this.onFocus} />
+                <input type={this.state.type} placeholder={this.props.placeholder} max="4000-12-31" className="mm-popup__input"  value={this.state.value} onChange={this.onChange}  onFocus={this.onFocus} />
 
             </div>
-    )
+        )
     }
 }
 
@@ -85,6 +86,63 @@ class Text_Prompt extends React.Component {
     }
 }
 
+class Radio_Button extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            priority : this.props.value,
+            retrieval: this.props.retrieve
+        };
+
+
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.priority !== this.state.priority) {
+            this.props.onChange(this.state.priority);
+        }
+    }
+
+    onInputChange = (event) => {
+        this.setState({
+            priority: event.target.value
+        })
+    }
+
+
+    render() {
+        let allEventsButton = ""
+        if (this.state.retrieval == "True"){
+            allEventsButton = <div><input type="radio" value="AllEvents"
+                                          checked={this.state.priority === 'AllEvents'}
+                                          onChange={this.onInputChange}  />
+                <label htmlFor="high">All Events</label></div>
+        }
+
+        return (
+            <div className='radiogroup'>
+                {allEventsButton}
+                <input type="radio" value="high"
+                       checked={this.state.priority === 'high'}
+                       onChange={this.onInputChange}  />
+                <label htmlFor="high">High</label>
+
+                <input type="radio" value="medium"
+                       checked={this.state.priority === 'medium'}
+                       onChange={this.onInputChange}  />
+                <label htmlFor="medium">Medium</label>
+
+                <input type="radio" value="low"
+                       checked={this.state.priority === 'low'}
+                       onChange={this.onInputChange}  />
+                <label htmlFor="low">Low</label>
+            </div>
+
+        )
+    }
+}
+
 Popup.registerPlugin('new', function (defaultValue, add_action, startdate, enddate, callback) {
     let start_promptValue = startdate;
     let start_promptChange = function (value) {
@@ -106,6 +164,11 @@ Popup.registerPlugin('new', function (defaultValue, add_action, startdate, endda
         description_promptValue = value;
     };
 
+    let priorityValue = "high";
+    let priorityChange = function (value) {
+        priorityValue = value
+    }
+
     this.create({
         title: 'Your Event',
         content:<div>
@@ -118,6 +181,10 @@ Popup.registerPlugin('new', function (defaultValue, add_action, startdate, endda
             <Text_Prompt onChange={title_promptChange} placeholder={"Type title here"}  value={""} />
             <p>Description</p>
             <Text_Prompt onChange={description_promptChange} placeholder={"Type description here"}  value={""} />
+            <p></p><p>Priority</p>
+            <div>
+                <Radio_Button value="high" onChange={priorityChange} retrieve="False"/>
+            </div>
 
 
         </div>,
@@ -128,7 +195,7 @@ Popup.registerPlugin('new', function (defaultValue, add_action, startdate, endda
                 key: '⌘+s',
                 className: 'success',
                 action: function () {
-                    callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, add_action);
+                    callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, priorityValue, add_action);
                     Popup.close();
                 }
             }
@@ -139,7 +206,7 @@ Popup.registerPlugin('new', function (defaultValue, add_action, startdate, endda
 });
 
 /** Prompt plugin */
-Popup.registerPlugin('modify', function (defaultValue, edit_action, delete_action, startdate, enddate, title, description, callback) {
+Popup.registerPlugin('modify', function (defaultValue, edit_action, delete_action, startdate, enddate, title, description, priority, callback) {
     let start_promptValue = startdate;
     let start_promptChange = function (value) {
         start_promptValue = value;
@@ -160,6 +227,11 @@ Popup.registerPlugin('modify', function (defaultValue, edit_action, delete_actio
         description_promptValue = value;
     };
 
+    let priorityValue = priority;
+    let priorityChange = function (value) {
+        priorityValue = value
+    }
+
     this.create({
         title: 'Modify Your Event',
         content: <div>
@@ -171,6 +243,11 @@ Popup.registerPlugin('modify', function (defaultValue, edit_action, delete_actio
             <Text_Prompt onChange={title_promptChange} placeholder={title}  value={title} />
             <p>Description</p>
             <Text_Prompt onChange={description_promptChange}  placeholder={description} value={description} />
+            <p></p><p>Priority</p>
+            <div>
+                <Radio_Button value={priority} onChange={priorityChange} />
+            </div>
+
         </div>,
         buttons: {
             left: ['cancel'],
@@ -179,7 +256,7 @@ Popup.registerPlugin('modify', function (defaultValue, edit_action, delete_actio
                 key: '⌘+s',
                 className: 'success',
                 action: function () {
-                    callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, edit_action);
+                    callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, priorityValue, edit_action);
                     Popup.close();
                 }
             },
@@ -187,9 +264,55 @@ Popup.registerPlugin('modify', function (defaultValue, edit_action, delete_actio
                     text: 'delete',
                     key: '⌘+s',
                     action: function () {
-                        callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, delete_action);
+                        callback(start_promptValue, end_promptValue, title_promptValue, description_promptValue, priorityValue, delete_action);
                         Popup.close();
                     }
+                }
+
+            ]
+        }
+    });
+});
+
+Popup.registerPlugin('csv', function (events, callback) {
+
+    var data = []
+    var i = 0
+    for (i = 0; i < events.length; i++) {
+
+        var event = {
+            start: events[i].start.toLocaleString(),
+            end: events[i].end.toLocaleString(),
+            title: events[i].title,
+            description: events[i].desc,
+            priority: events[i].prior
+        }
+        data.push(event)
+
+
+    }
+    var today = new Date()
+    var month = today.getMonth()+1
+    var filename = "backup-" + today.getFullYear() + "-" + month + "-" + today.getDate() + ".csv"
+
+
+    this.create({
+        title: 'Download Your Events Data',
+        content:<div>
+            <CSVLink data={data} filename={filename}>Click me to Download ⬇</CSVLink>
+
+
+        </div>,
+        buttons: {
+            left: ['cancel'],
+            right: [{
+                text: 'back',
+                key: '⌘+s',
+                className: 'success',
+                action: function () {
+                    callback(events);
+                    Popup.close();
+                }
             }
 
             ]
@@ -197,4 +320,42 @@ Popup.registerPlugin('modify', function (defaultValue, edit_action, delete_actio
     });
 });
 
-export default Text_Prompt;
+
+Popup.registerPlugin('merge', function (defaultValue, action, id, callback) {
+
+
+    let id_promptValue = id;
+    let id_promptChange = function (value) {
+        id_promptValue = value;
+    };
+
+    this.create({
+        title: 'Modify Your Event',
+        content: <div>
+
+            <p>Enter Calendar ID</p>
+            <Text_Prompt onChange={id_promptChange}  placeholder={id} value={id} />
+
+        </div>,
+        buttons: {
+            left: ['cancel'],
+            right: [{
+                text: 'merge',
+                key: '⌘+s',
+                className: 'success',
+                action: function () {
+                    callback(id_promptValue, action);
+                    Popup.close();
+                }
+            }]
+        }
+    });
+});
+
+
+
+export {
+    Radio_Button,
+    Text_Prompt
+}
+
